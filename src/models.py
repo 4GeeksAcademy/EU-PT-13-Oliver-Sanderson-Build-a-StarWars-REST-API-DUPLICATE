@@ -17,6 +17,7 @@ class User(db.Model):
             "email": self.email,
             # do not serialize the password, its a security breach
         }
+    
 class People(db.Model):
     # Reference: https://flask-sqlalchemy.palletsprojects.com/en/2.x/models/
     id = db.Column(db.Integer, primary_key=True)
@@ -25,12 +26,13 @@ class People(db.Model):
     birth_year = db.Column(db.String(120), nullable=True)
 
     def __repr__(self):
-        return '<People %r>' % self.username
+        return '<People %r>' % self.name
 
     def serialize(self):
         return {
             "id": self.id,
             "uid": self.external_uid,
+            "name": self.name,
             # do not serialize the password, its a security breach
         }
 
@@ -48,4 +50,25 @@ class Planet(db.Model):
             "id": self.id,
             "name": self.name,
             "url": self.url
+        }
+    
+class Favorites(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    type = db.Column(db.String(120), nullable=False)
+    fave_id = db.Column(db.Integer, nullable=False)
+    name = db.Column(db.String(120), nullable=False)
+    url = db.Column(db.String(120), nullable=False)
+
+    def __repr__(self):
+        return '<Favorites %r>' % self.name
+    
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "type": self.type,
+            "fave_id": self.fave_id,
+            "name": self.name,
+            "url": self.url,
         }
