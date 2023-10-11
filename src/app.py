@@ -12,12 +12,6 @@ from models import db, User, Planet, People, Favorites
 #from models import Person
 
 
-characters = {1:{"name": "Luke"}, 2:{"name": "Yoda"}}
-planets = {1:{"name": "Earth"}, 2:{"name": "Mars"}}
-users = {1:{"username": "Bitter", "email": "123@email.com", "favorites": []}, 2: {"username": "Bitter", "email": "123@email.com", "favorites": []}}
-
-
-
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
@@ -48,13 +42,11 @@ def sitemap():
 
 @app.route("/people", methods=['GET'])
 def handle_people():
-    # return jsonify(characters)
     people = People.query.all()
     return jsonify([pe.serialize() for pe in people]), 200
 
 @app.route("/people/<int:id_recieved>", methods=['GET'])
 def handle_people_specific(id_recieved):
-    # return jsonify(characters[id])
     person = People.query.filter_by(id = int(id_recieved))
     return jsonify([per.serialize() for per in person]), 200
 
@@ -63,13 +55,11 @@ def handle_people_specific(id_recieved):
 
 @app.route("/planets", methods=['GET'])
 def handle_planets():
-    # return jsonify(planets)
     planets = Planet.query.all()
     return jsonify([p.serialize() for p in planets]), 200
 
 @app.route("/planets/<int:id_recieved>", methods=['GET'])
 def handle_planet_specific(id_recieved):
-    # return jsonify(planets[id_recieved])
     planet = Planet.query.filter_by(id = int(id_recieved))
     return jsonify([per.serialize() for per in planet]), 200
 
@@ -78,7 +68,6 @@ def handle_planet_specific(id_recieved):
 
 @app.route("/users", methods=['GET'])
 def handle_users():
-    # return jsonify(users)
     users = User.query.all()
     return jsonify([u.serialize() for u in users]), 200
 
@@ -87,14 +76,14 @@ def handle_users():
 
 @app.route("/users/favorites", methods=['GET'])
 def handle_user_faves():
-    # return jsonify(users[1]["favorites"])
     faves = Favorites.query.all()
     return jsonify([f.serialize() for f in faves]), 200
 
 @app.route("/favorite/people/<int:id_recieved>", methods=['POST'])
 def add_fave_person(id_recieved):
     request_body = request.get_json()
-    new_fave = Favorites(type="people", name=request_body["name"], fave_id=id_recieved, url=request_body["url"])
+    user = User.query.filter_by(is_active=True).first() #sets user to active user to be saved into favorite
+    new_fave = Favorites(type="people", name=request_body["name"], fave_id=id_recieved, url=request_body["url"], user_id=user.id)
     db.session.add(new_fave)
     db.session.commit()
     return f"Added favorite with id: {id_recieved}"
@@ -108,7 +97,8 @@ def add_fave_person(id_recieved):
 @app.route("/favorite/planet/<int:id_recieved>", methods=['POST'])
 def add_fave_planet(id_recieved):
     request_body = request.get_json()
-    new_fave = Favorites(type="planet", name=request_body["name"], fave_id=id_recieved, url=request_body["url"])
+    user = User.query.filter_by(is_active=True).first() #sets user to active user to be saved into favorite
+    new_fave = Favorites(type="planet", name=request_body["name"], fave_id=id_recieved, url=request_body["url"], user_id=user.id)
     db.session.add(new_fave)
     db.session.commit()
     return f"Added favorite with id: {id_recieved}"
