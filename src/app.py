@@ -15,6 +15,7 @@ from models import db, User, Planet, People, Favorites
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
+
 db_url = os.getenv("DATABASE_URL")
 if db_url is not None:
     app.config['SQLALCHEMY_DATABASE_URI'] = db_url.replace("postgres://", "postgresql://")
@@ -22,10 +23,14 @@ else:
     app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:////tmp/test.db"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+
+
 MIGRATE = Migrate(app, db)
 db.init_app(app)
 CORS(app)
 setup_admin(app)
+
+
 
 # Handle/serialize errors like a JSON object
 @app.errorhandler(APIException)
@@ -76,13 +81,13 @@ def handle_users():
 
 @app.route("/users/favorites", methods=['GET'])
 def handle_user_faves():
-    faves = Favorites.query.all()
+    faves = Favorites.query.filter_by(user_id = User.id)
     return jsonify([f.serialize() for f in faves]), 200
 
 @app.route("/favorite/people/<int:id_recieved>", methods=['POST'])
 def add_fave_person(id_recieved):
     request_body = request.get_json()
-    user = User.query.filter_by(is_active=True).first() #sets user to active user to be saved into favorite
+    user = User.query.filter_by(is_active=True).first() #sets user to first active user in the list (later is_active could be used to manage login and logout)
     new_fave = Favorites(type="people", name=request_body["name"], fave_id=id_recieved, url=request_body["url"], user_id=user.id)
     db.session.add(new_fave)
     db.session.commit()
@@ -97,7 +102,7 @@ def add_fave_person(id_recieved):
 @app.route("/favorite/planet/<int:id_recieved>", methods=['POST'])
 def add_fave_planet(id_recieved):
     request_body = request.get_json()
-    user = User.query.filter_by(is_active=True).first() #sets user to active user to be saved into favorite
+    user = User.query.filter_by(is_active=True).first() #sets user to first active user in the list (later is_active could be used to manage login and logout)
     new_fave = Favorites(type="planet", name=request_body["name"], fave_id=id_recieved, url=request_body["url"], user_id=user.id)
     db.session.add(new_fave)
     db.session.commit()
@@ -109,7 +114,7 @@ def add_fave_planet(id_recieved):
 
 @app.route("/favorite/people/<int:id_recieved>", methods=['DELETE'])
 def del_fave_person(id_recieved):
-    to_delete = Favorites.query.filter_by(type="people", fave_id=id_recieved).first()
+    to_delete = Favorites.query.filter_by(type="people", fave_id=id_recieved, user_id = User.id).first() # Now also checks for current user so can only delete active users favourites
     print(to_delete)
     if to_delete:
         db.session.delete(to_delete)
@@ -120,7 +125,7 @@ def del_fave_person(id_recieved):
     
 @app.route("/favorite/planet/<int:id_recieved>", methods=['DELETE'])
 def del_fave_planet(id_recieved):
-    to_delete = Favorites.query.filter_by(type="planet", fave_id=id_recieved).first()
+    to_delete = Favorites.query.filter_by(type="planet", fave_id=id_recieved, user_id = User.id).first()
     if to_delete:
         db.session.delete(to_delete)
         db.session.commit()
